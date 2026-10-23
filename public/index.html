@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111a18"><meta name="description" content="Your experience, clearly expressed. A focused interview practice and notes companion.">
+  <title>Interview Assist · Your next thought, clearer</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Interview Assist home"><img src="/icon.svg" width="34" height="34" alt=""><span>interview<span class="brand-light">assist</span></span></a>
+    <div class="top-actions"><span class="connection" id="connection">Checking connection</span><button id="setup" class="quiet">Setup <span aria-hidden="true">↗</span></button></div>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="eyebrow">YOUR WORKSPACE</div>
+      <button id="companion-tab" class="nav-item selected" aria-pressed="true"><span aria-hidden="true">◈</span> Companion</button>
+      <button id="profile-tab" class="nav-item" aria-pressed="false"><span aria-hidden="true">▤</span> My experience <span id="profile-dot" class="tiny-dot"></span></button>
+      <div class="sidebar-section"><div class="eyebrow">QUICK QUESTIONS</div><div id="questions" class="question-list"></div></div>
+      <div class="sidebar-note"><span class="small-leaf" aria-hidden="true">✳</span><strong>You know your story.</strong><p>Take a breath. Start with the point. Give one real example.</p></div>
+      <div class="sidebar-footer">Notes saved on this browser.<br>Export to move to another device.</div>
+    </aside>
+
+    <section id="companion" class="workspace">
+      <div class="page-heading"><div><div class="eyebrow">ONE QUESTION AT A TIME</div><h1>Your next thought,<br><span>clearer.</span></h1></div><button id="focus" class="quiet" aria-pressed="false">Focus view</button></div>
+      <div id="setup-banner" class="notice"><span class="notice-icon" aria-hidden="true">i</span><div><strong id="banner-title">Ready for your real experience</strong><p id="banner-text">Add your background, then ask a question. Saved cards work without an API connection.</p></div><button id="banner-action" class="text-button">Add notes →</button></div>
+
+      <form id="question-form" class="question-panel">
+        <div class="row"><label class="eyebrow" for="question">WHAT DID THEY ASK?</label><span class="keyboard-hint">Ctrl / ⌘ + Enter</span></div>
+        <textarea id="question" maxlength="2400" rows="3" placeholder="Type a few keywords, paste a question, or use your microphone…"></textarea>
+        <div class="question-controls"><button id="mic" type="button" class="quiet" aria-pressed="false">◉ Dictate question</button><div class="row"><button type="button" id="stop" class="quiet" hidden>Stop</button><button type="submit" id="suggest" class="primary">Suggest an answer <span aria-hidden="true">↗</span></button></div></div>
+        <p id="mic-note" class="micro-note">Mic is off. Capture other speakers only with their permission. Browser voice services may process audio.</p>
+      </form>
+
+      <section class="answer-panel" aria-labelledby="answer-label">
+        <div class="answer-toolbar"><div class="row"><span class="status-dot"></span><h2 id="answer-label" class="eyebrow">YOUR TALKING POINTS</h2></div><div class="row"><span id="answer-source" class="source">Start here</span><button id="font-down" class="icon-button" aria-label="Smaller answer text">A−</button><button id="font-up" class="icon-button" aria-label="Larger answer text">A+</button></div></div>
+        <div id="answer" class="answer-text"><p class="opening">Your experience is the starting point.</p><p class="answer-placeholder">Add the facts you want to draw on. Then choose a question or open a saved card below.</p></div>
+        <p id="status" class="answer-status" role="status" aria-live="polite"></p>
+        <div class="answer-actions"><div class="row wrap"><button id="shorter" class="pill" disabled>Make it shorter</button><button id="next" class="pill" disabled>Next point</button><button id="clarify" class="pill">Ask for clarity</button></div><div class="row"><button id="copy-answer" class="text-button" disabled>Copy</button><button id="save-card" class="text-button" disabled>Save card +</button></div></div>
+      </section>
+      <div class="below-answer"><p>Use the wording that sounds like you. Check every claim.</p><button id="copy-prompt" class="text-button">Copy prompt for ChatGPT ↗</button></div>
+
+      <section class="cards-section"><div class="section-heading"><div><div class="eyebrow">ALWAYS WITHIN REACH</div><h2>Saved talking points</h2></div><button id="new-card" class="text-button">+ Add card</button></div><p class="section-copy">Instant, editable notes. No AI connection needed.</p><div id="cards" class="cards-grid"></div></section>
+    </section>
+
+    <section id="profile" class="workspace" hidden>
+      <div class="page-heading"><div><div class="eyebrow">GROUNDED IN WHAT YOU KNOW</div><h1>Your experience.<br><span>Your words.</span></h1></div></div>
+      <div class="profile-panel"><p class="section-copy">Only add facts you can explain. These notes stay in this browser until you request AI help or export them. AI requests send your notes and question to OpenAI through your laptop.</p>
+        <form id="profile-form">
+          <label for="role">Target role</label><input id="role" maxlength="500" placeholder="e.g. AV Designer · company name">
+          <label for="facts">My background & real examples</label><textarea id="facts" rows="12" maxlength="14000" placeholder="Current work and education…&#10;Tools I have actually used…&#10;One real problem: what happened, what I did, how I verified the result…&#10;Skills I am still learning…"></textarea>
+          <label for="job">Job details <span class="muted">optional</span></label><textarea id="job" rows="5" maxlength="10000" placeholder="Paste the relevant responsibilities and requirements. Leave out confidential information."></textarea>
+          <div class="row wrap"><button class="primary" type="submit">Save my notes</button><button id="export" type="button" class="quiet">Export notes</button><button id="import" type="button" class="quiet">Import notes</button><input type="file" id="import-file" accept="application/json,.json" hidden></div>
+          <p id="profile-status" role="status" class="micro-note"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <dialog id="setup-dialog"><form method="dialog"><div class="dialog-heading"><h2>A little setup. Then focus.</h2><button class="icon-button" aria-label="Close setup">×</button></div></form>
+    <p id="setup-state" class="notice-text"></p>
+    <ol class="setup-steps"><li><strong>Start with your notes.</strong> Add true experience in My experience. Save a few cards you can use instantly.</li><li><strong>Enable live suggestions.</strong> On your laptop, copy <code>.env.example</code> to <code>.env</code>, add an OpenAI API key, and restart <code>npm start</code>. API usage is billed separately from ChatGPT.</li><li><strong>Keep it within reach.</strong> Open <code>http://localhost:3210</code> beside Teams. For a phone, see the same-Wi-Fi setup in the README.</li></ol>
+    <label for="access-token">Laptop access token <span class="muted">only for phone / LAN setup</span></label><input type="password" id="access-token" autocomplete="off" placeholder="APP_ACCESS_TOKEN from your laptop">
+    <button id="save-token" class="primary">Save token for this tab</button>
+    <p class="micro-note">This is your app access token, not your OpenAI key. Keep the OpenAI key in the laptop’s .env file.</p>
+    <div class="dialog-divider"></div><h3>Voice & meeting use</h3><p class="section-copy">Dictation uses your microphone in supporting browsers; it does not connect to Teams or capture headphone audio. Review the transcription before requesting an answer. Use AI assistance during an interview only if the interviewer permits it; the saved notes also work for preparation.</p>
+  </dialog>
+  <dialog id="card-dialog"><form id="card-form"><div class="dialog-heading"><h2 id="card-dialog-title">A talking point to keep</h2><button type="button" id="close-card" class="icon-button" aria-label="Close card editor">×</button></div><label for="card-title">Question or title</label><input id="card-title" maxlength="140" required><label for="card-body">Your wording</label><textarea id="card-body" rows="9" maxlength="7000" required></textarea><div class="row spread"><button type="button" id="delete-card" class="danger" hidden>Delete card</button><button class="primary" type="submit">Save card</button></div></form></dialog>
+  <dialog id="copy-dialog"><form method="dialog"><div class="dialog-heading"><h2>Copy this text</h2><button class="icon-button" aria-label="Close copy text">×</button></div><textarea id="copy-text" rows="12" readonly></textarea><p class="micro-note">Select and copy the text, then paste it into ChatGPT or your notes.</p></form></dialog>
+  <div id="toast" role="status" hidden></div>
+</body>
+</html>
