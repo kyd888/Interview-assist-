@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 node_modules/
+.netlify/
 *.log
 interview-notes*.json
 .DS_Store

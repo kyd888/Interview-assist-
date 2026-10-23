@@ -2,6 +2,27 @@
 
 A focused interview practice and notes companion for a laptop or phone. Type a question or dictate it, then get a short opening sentence and a few supporting talking points streamed onto a large, readable card.
 
+## Deploy on Netlify
+
+Connect this **full repository** to the Netlify project and deploy `main`. The included `netlify.toml` sets the publish folder to `public`, runs tests, and bundles the streaming API in `netlify/functions`. You do not run `npm start` on Netlify. Uploading just `public` creates only the interface; it cannot provide live AI.
+
+In the Netlify project's environment variables, add the following with access to the **Functions** scope (or all scopes), then redeploy:
+
+| Variable | Value |
+| --- | --- |
+| `OPENAI_API_KEY` | Your OpenAI API key; keep it only in Netlify's environment settings |
+| `APP_ACCESS_TOKEN` | A private random string of at least 24 characters; required for hosted AI |
+| `OPENAI_MODEL` | Optional; defaults to `gpt-5.6-terra` |
+| `OPENAI_REASONING_EFFORT` | Optional; defaults to `none` |
+
+Generate a token locally with `node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"`. Enter that token in the app's **Setup** on each device, not your OpenAI key. Do not share it or add it to the repository. Hosted API requests are refused until a strong token is configured; suggestions also require the correct token on every request. The function declares a per-IP limit of 30 requests per minute. This is a single-owner companion, not a multi-user authentication system.
+
+Once deployed, the HTTPS site works directly on a phone without keeping a laptop server running or using the same Wi-Fi. Notes remain separate per browser; use Export/Import to transfer them. Browser dictation still depends on browser support and permission, and does not capture Teams audio automatically.
+
+Check `/api/config` on your site: it should return JSON with `hosting: "netlify"`, and `ready: true` when both required environment variables are set. Configuration checks do not verify OpenAI model access or billing; try one short suggestion. If the root URL returns 404, verify the repository is connected, base directory is the repository root, publish directory is `public`, and a successful production deploy exists. These settings cannot be repaired by uploading an `.env` file.
+
+Netlify references: [streaming functions and route configuration](https://docs.netlify.com/build/functions/api/), [runtime environment variables](https://docs.netlify.com/build/functions/environment-variables/).
+
 ## Run on your laptop
 
 Install **Node.js 22 or newer**, then:
@@ -57,7 +78,7 @@ This is microphone dictation, not automatic Teams audio capture. It will not hea
 
 - Your profile and saved cards are stored in this browser’s `localStorage`. Private browsing, clearing site data, or moving to a different URL/device can remove or separate them. Export a backup.
 - Exported JSON includes your notes and saved cards, but not access tokens, API keys, or unsaved generated answers. Keep exports private; do not add them to this public repository.
-- AI requests send the question, role, background, job details, and (for a follow-up) prior answer to OpenAI through the laptop server. The server does not write them to disk or application logs. Responses use `store: false`; this does not override OpenAI’s other applicable data-retention policies.
+- AI requests send the question, role, background, job details, and (for a follow-up) prior answer to OpenAI through the laptop server or the Netlify function, depending on deployment. On Netlify, that provider also processes the request. Application code does not write the notes to disk or application logs. Responses use `store: false`; this does not override hosting or OpenAI data-retention policies.
 - Only user-clicked requests call the API. There is no passive meeting listening, cross-device session relay, or connection to your ChatGPT account/history.
 - Instructions ground personal claims in supplied facts and distinguish actual experience from hypothetical approaches. These are model instructions, not a guarantee: review suggestions and do not present invented qualifications.
 

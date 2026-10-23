@@ -27,7 +27,7 @@ function normalize(data) {
 }
 let state = blankState();
 try { const raw = localStorage.getItem(storageKey); if (raw) state = normalize(JSON.parse(raw)); } catch {}
-let config = { ready: false, needsToken: false }, output = '', answerQuestion = '', activeRequest = null, requestId = 0;
+let config = { ready: false, needsToken: false, hosting: location.hostname.endsWith('.netlify.app') ? 'netlify' : 'local' }, output = '', answerQuestion = '', activeRequest = null, requestId = 0;
 let editingCard = null, recognition = null, micTimer = null, toastTimer;
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 3500); }
 function persist() {
@@ -43,7 +43,7 @@ function updateProfile() {
 }
 function banner() {
   const hasFacts = Boolean(state.facts.trim());
-  $('banner-title').textContent = !hasFacts ? 'Make the suggestions yours' : config.ready ? 'Ready to draw on your experience' : 'Your notes are ready. Live AI needs a key.';
+  $('banner-title').textContent = !hasFacts ? 'Make the suggestions yours' : config.ready ? 'Ready to draw on your experience' : 'Your notes are ready. Finish the AI setup.';
   $('banner-text').textContent = !hasFacts ? 'Add your background and one real example before asking AI for an answer.' : config.ready ? 'Ask a question, then use the parts that sound like you.' : 'Use saved cards now, or open Setup to connect OpenAI.';
   $('banner-action').textContent = !hasFacts ? 'Add notes →' : config.ready ? 'Edit notes →' : 'Setup →';
 }
@@ -82,6 +82,8 @@ async function suggest(mode = 'answer') {
   const question = (mode !== 'answer' && answerQuestion ? answerQuestion : $('question').value).trim();
   if (!question) { $('question').focus(); return status('Type or dictate a question first.', true); }
   if (!config.ready) { status('Live AI is not connected. Open a saved card, or copy your prompt for ChatGPT.', true); $('setup-dialog').showModal(); return; }
+  let token = ''; try { token = sessionStorage.getItem('interview-access-token') || ''; } catch {}
+  if (config.needsToken && !token) { status('Enter your app access token in Setup to unlock suggestions.', true); $('setup-dialog').showModal(); return; }
   cancelRequest(false);
   const id = requestId;
   const previous = mode === 'answer' ? '' : output;
@@ -91,11 +93,13 @@ async function suggest(mode = 'answer') {
   renderAnswer(''); busy(true); $('answer-source').textContent = 'Connecting…'; status('Waiting for the first words…');
   const start = performance.now(); let first = true, finished = false;
   try {
-    let token = ''; try { token = sessionStorage.getItem('interview-access-token') || ''; } catch {}
     const response = await fetch('/api/suggest', { method: 'POST', signal: controller.signal,
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ question, mode, previous, facts: state.facts, role: state.role, job: state.job }) });
-    if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'Could not get a suggestion.'); }
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || (response.status === 429 ? 'Too many requests. Wait a minute, then try again.' : 'The AI endpoint is unavailable. Check Setup or use a saved card.'));
+    }
     for await (const event of readEvents(response.body)) {
       if (id !== requestId) return;
       if (event.type === 'delta') {
@@ -146,10 +150,17 @@ function downloadNotes() {
 }
 async function refreshConfig() {
   try {
-    const response = await fetch('/api/config'); if (!response.ok) throw new Error(); config = await response.json();
+    const response = await fetch('/api/config'); if (!response.ok) throw new Error(); config = { hosting: 'local', ...await response.json() };
     $('connection').textContent = config.ready ? 'AI configured' : 'Saved cards available'; $('connection').classList.toggle('ready', config.ready);
-    $('setup-state').textContent = config.ready ? `Server key configured · ${config.model}. A successful suggestion will confirm access.` : 'Saved cards work now. No OpenAI API key is configured on the server.';
-  } catch { $('connection').textContent = 'Server unavailable'; $('setup-state').textContent = 'The server is unreachable. Start it on your laptop. Saved cards still work in this open page.'; config.ready = false; }
+    $('setup-state').textContent = config.ready ? `Server configured · ${config.model}. A successful suggestion will confirm access.`
+      : config.hosting === 'netlify' ? `Saved cards work now. Configure ${[config.needsApiKey && 'OPENAI_API_KEY', config.needsServerToken && 'APP_ACCESS_TOKEN (at least 24 characters)'].filter(Boolean).join(' and ')} in Netlify, then redeploy.`
+      : 'Saved cards work now. No OpenAI API key is configured on the server.';
+  } catch {
+    $('connection').textContent = 'AI server unavailable';
+    $('setup-state').textContent = config.hosting === 'netlify' ? 'The Netlify API is unavailable. Deploy the full repository, including netlify.toml and netlify/functions. Uploading only the public folder does not deploy the AI endpoint.' : 'The server is unreachable. Start it on your laptop. Saved cards still work in this open page.';
+    config.ready = false; $('connection').classList.remove('ready');
+  }
+  $('local-setup').hidden = config.hosting === 'netlify'; $('hosted-setup').hidden = config.hosting !== 'netlify';
   banner(); busy(Boolean(activeRequest));
 }
 
